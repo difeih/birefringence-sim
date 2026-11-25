@@ -261,7 +261,11 @@
     }
 
     @media (max-width: 720px) {
-      #canvasLattice, #canvas3d { height: 370px; }
+      .app { padding: 10px 10px 20px; }
+      .btn { padding: 7px 10px; font-size: 0.78rem; }
+      #canvasLattice, #canvas3d { height: 340px; }
+      #canvas2d { height: 250px; }
+      .canvas-legend { font-size: 0.68rem; padding: 5px 8px; }
     }
 
     .overlay-tag {
@@ -357,8 +361,8 @@
 <div class="app">
   <header>
     <div>
-      <h1 id="hdrTitle">晶体双折射几何实验室：实空间晶格 × 折射率面 × 入射面截线</h1>
-      <p class="sub" id="hdrSub">左键或右键拖拽任意 3D 画布即可同步旋转（支持正上俯视 / 正视 / 侧视）；直接从晶胞形状与电子云极化推导双折射</p>
+      <h1 id="hdrTitle">双折射几何实验室：实空间晶格 × 折射率面 × 入射面截线</h1>
+      <p class="sub" id="hdrSub">左键/单指旋转视角，右键/双指拖动平移，滚轮/双指捏合自由放大；直接从晶胞形状与电子云极化推导双折射</p>
     </div>
     <button class="btn btn-lang" id="btnLang">🌐 English / 中文</button>
   </header>
@@ -446,6 +450,8 @@
             <button class="btn" id="camTopXY">俯视 xy (正上)</button>
             <button class="btn" id="camFrontXZ">正视 xz</button>
             <button class="btn" id="camSideYZ">侧视 yz</button>
+            <button class="btn" id="camZoomIn" title="放大">＋</button>
+            <button class="btn" id="camZoomOut" title="缩小">－</button>
           </div>
         </div>
         <div class="canvas-box">
@@ -518,9 +524,9 @@
   const I18N = {
     zh: {
       htmlLang: 'zh-CN',
-      pageTitle: '晶体双折射几何实验室：实空间晶格 × 折射率面 × 入射面截线',
-      hdrTitle: '晶体双折射几何实验室：实空间晶格 × 折射率面 × 入射面截线',
-      hdrSub: '左键或右键拖拽任意 3D 画布即可同步旋转（支持正上俯视 / 正视 / 侧视）；直接从晶胞形状与电子云极化推导双折射',
+      pageTitle: '双折射几何实验室：实空间晶格 × 折射率面 × 入射面截线',
+      hdrTitle: '双折射几何实验室：实空间晶格 × 折射率面 × 入射面截线',
+      hdrSub: '左键/单指旋转视角，右键/双指拖动平移，滚轮/双指捏合自由放大；直接从晶胞形状与电子云极化推导双折射',
       btnLang: '🌐 English',
       lblPreset: '晶体预设：',
       preCalcite: '方解石 Calcite (120° + 扁平CO₃²⁻ → 负单轴)',
@@ -536,7 +542,7 @@
       lblThetaK: '波矢 k̂ 极角 θ_k (相对 z 轴)',
       lblPhiK: '波矢 k̂ 方位角 φ_k (绕 z 轴)',
       titleLat: '① 实空间 3D 布拉维晶格、原胞基矢 (a₁,a₂,a₃) 与 1/r³ 偶极局域场',
-      subLat: '左/右键拖动任意 3D 画布均可同步旋转；滚轮缩放',
+      subLat: '左键/单指旋转 · 右键/双指平移 · 滚轮/双指捏合自由放大',
       btnLatShell: '原胞 + 近邻配位',
       btnLatGrid: '周期点阵 (3×3)',
       btnDrive2: '驱动场: 模2 (E₂)',
@@ -617,9 +623,9 @@
     },
     en: {
       htmlLang: 'en',
-      pageTitle: 'Crystal Birefringence Lab: 3D Lattice × Refractive Surface × Incidence Slice',
-      hdrTitle: 'Crystal Birefringence Geometry Lab: Real-Space Lattice × Refractive Surface × 2D Slice',
-      hdrSub: 'Left or right drag either 3D view to orbit synchronously (with Top/Front/Side presets); derive birefringence directly from unit-cell shape & polarizability',
+      pageTitle: 'Birefringence Geometry Lab: 3D Lattice × Refractive Surface × Incidence Slice',
+      hdrTitle: 'Birefringence Geometry Lab: Real-Space Lattice × Refractive Surface × 2D Slice',
+      hdrSub: 'Left-drag / 1-finger to orbit, right-drag / 2-finger to pan, scroll / pinch to zoom freely; derive birefringence from unit-cell shape & polarizability',
       btnLang: '🌐 中文',
       lblPreset: 'Crystal Presets:',
       preCalcite: 'Calcite (120° + flat CO₃²⁻ → Negative Uniaxial)',
@@ -635,7 +641,7 @@
       lblThetaK: 'Wave-normal Polar θ_k (from z)',
       lblPhiK: 'Wave-normal Azimuth φ_k (around z)',
       titleLat: '① Real-Space 3D Bravais Lattice, Basis (a₁,a₂,a₃) & 1/r³ Dipole Field',
-      subLat: 'Left/right drag either 3D canvas to orbit in sync; scroll to zoom',
+      subLat: 'Left/1-finger: orbit · Right/2-finger: pan · Scroll/pinch: free zoom',
       btnLatShell: 'Unit Cell + 1st Shell',
       btnLatGrid: 'Periodic Grid (3×3)',
       btnDrive2: 'Drive: Mode 2 (E₂)',
@@ -1037,7 +1043,9 @@
     autoSweepQuote: true,
     yaw: -0.64,
     pitch: 0.42,
-    zoom: 1.0
+    zoom: 1.0,
+    panX: 0,
+    panY: 0
   };
 
   let model = null;
@@ -1083,6 +1091,8 @@
     camTopXY: document.getElementById('camTopXY'),
     camFrontXZ: document.getElementById('camFrontXZ'),
     camSideYZ: document.getElementById('camSideYZ'),
+    camZoomIn: document.getElementById('camZoomIn'),
+    camZoomOut: document.getElementById('camZoomOut'),
     title2d: document.getElementById('title2d'),
     sub2d: document.getElementById('sub2d'),
     sliceXY: document.getElementById('sliceXY'),
@@ -1346,10 +1356,20 @@
     updateLegend3D();
   });
 
-  dom.camDefault.addEventListener('click', () => { state.yaw = -0.64; state.pitch = 0.42; state.zoom = 1.0; });
-  dom.camTopXY.addEventListener('click', () => { state.yaw = 0; state.pitch = Math.PI / 2; state.zoom = 1.0; });
-  dom.camFrontXZ.addEventListener('click', () => { state.yaw = 0; state.pitch = 0; state.zoom = 1.0; });
-  dom.camSideYZ.addEventListener('click', () => { state.yaw = -Math.PI / 2; state.pitch = 0; state.zoom = 1.0; });
+  function applyZoomFactor(factor) {
+    const newZoom = Math.max(0.15, Math.min(1000, state.zoom * factor));
+    const ratio = newZoom / state.zoom;
+    state.panX *= ratio;
+    state.panY *= ratio;
+    state.zoom = newZoom;
+  }
+
+  dom.camDefault.addEventListener('click', () => { state.yaw = -0.64; state.pitch = 0.42; state.zoom = 1.0; state.panX = 0; state.panY = 0; });
+  dom.camTopXY.addEventListener('click', () => { state.yaw = 0; state.pitch = Math.PI / 2; state.zoom = 1.0; state.panX = 0; state.panY = 0; });
+  dom.camFrontXZ.addEventListener('click', () => { state.yaw = 0; state.pitch = 0; state.zoom = 1.0; state.panX = 0; state.panY = 0; });
+  dom.camSideYZ.addEventListener('click', () => { state.yaw = -Math.PI / 2; state.pitch = 0; state.zoom = 1.0; state.panX = 0; state.panY = 0; });
+  dom.camZoomIn.addEventListener('click', () => applyZoomFactor(1.35));
+  dom.camZoomOut.addEventListener('click', () => applyZoomFactor(1 / 1.35));
 
   [dom.sB, dom.sC, dom.sGamma, dom.sAlphaZ].forEach(el => {
     el.addEventListener('input', () => {
@@ -1374,43 +1394,89 @@
   });
 
   // =========================================================================
-  // Full-Freedom 3D Orbit Camera (Left & Right Drag + Touch + Wheel)
+  // CAD-Style 3D Camera: Left/1-Finger Orbit, Right/2-Finger Pan, Scroll/Pinch Free Zoom
   // =========================================================================
-  let dragging = false, lx = 0, ly = 0;
+  let dragMode = null; // null | 'orbit' | 'pan' | 'pinch'
+  let lx = 0, ly = 0;
+  let lastPinchDist = 0, lastMidX = 0, lastMidY = 0;
 
-  function beginDrag(x, y) { dragging = true; lx = x; ly = y; }
-  function moveDrag(x, y) {
-    if (!dragging) return;
-    state.yaw -= (x - lx) * 0.008;
-    state.pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, state.pitch + (y - ly) * 0.008));
+  function beginMouseDrag(x, y, isPan) {
+    dragMode = isPan ? 'pan' : 'orbit';
     lx = x; ly = y;
   }
-  function endDrag() { dragging = false; }
+  function moveMouseDrag(x, y) {
+    if (dragMode !== 'orbit' && dragMode !== 'pan') return;
+    const dx = x - lx, dy = y - ly;
+    lx = x; ly = y;
+    if (dragMode === 'orbit') {
+      state.yaw -= dx * 0.008;
+      state.pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, state.pitch + dy * 0.008));
+    } else {
+      state.panX += dx;
+      state.panY += dy;
+    }
+  }
+  function endDrag() { dragMode = null; }
 
   [dom.canvasLattice, dom.canvas3d].forEach(cvs => {
     cvs.addEventListener('contextmenu', e => e.preventDefault());
     cvs.addEventListener('mousedown', e => {
       e.preventDefault();
-      beginDrag(e.clientX, e.clientY);
+      const isPan = (e.button === 2 || e.button === 1 || e.shiftKey);
+      beginMouseDrag(e.clientX, e.clientY, isPan);
     });
     cvs.addEventListener('touchstart', e => {
-      if (e.touches.length === 1) beginDrag(e.touches[0].clientX, e.touches[0].clientY);
+      if (e.touches.length === 1) {
+        dragMode = 'orbit';
+        lx = e.touches[0].clientX;
+        ly = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        dragMode = 'pinch';
+        const t0 = e.touches[0], t1 = e.touches[1];
+        lastPinchDist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY) || 1;
+        lastMidX = (t0.clientX + t1.clientX) * 0.5;
+        lastMidY = (t0.clientY + t1.clientY) * 0.5;
+      }
     }, { passive: true });
     cvs.addEventListener('touchmove', e => {
-      if (e.touches.length === 1) {
+      if (e.touches.length === 1 && dragMode === 'orbit') {
         e.preventDefault();
-        moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+        moveMouseDrag(e.touches[0].clientX, e.touches[0].clientY);
+      } else if (e.touches.length === 2) {
+        e.preventDefault();
+        const t0 = e.touches[0], t1 = e.touches[1];
+        const dist = Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY) || 1;
+        const midX = (t0.clientX + t1.clientX) * 0.5;
+        const midY = (t0.clientY + t1.clientY) * 0.5;
+        if (dragMode === 'pinch') {
+          applyZoomFactor(dist / lastPinchDist);
+          state.panX += (midX - lastMidX);
+          state.panY += (midY - lastMidY);
+        }
+        dragMode = 'pinch';
+        lastPinchDist = dist;
+        lastMidX = midX;
+        lastMidY = midY;
       }
     }, { passive: false });
+    cvs.addEventListener('touchend', e => {
+      if (e.touches.length === 1) {
+        dragMode = 'orbit';
+        lx = e.touches[0].clientX;
+        ly = e.touches[0].clientY;
+      } else if (e.touches.length === 0) {
+        endDrag();
+      }
+    }, { passive: true });
     cvs.addEventListener('wheel', e => {
       e.preventDefault();
-      state.zoom = Math.max(0.62, Math.min(1.75, state.zoom * (e.deltaY > 0 ? 0.94 : 1.06)));
+      const factor = e.deltaY > 0 ? 0.88 : 1.136;
+      applyZoomFactor(factor);
     }, { passive: false });
   });
 
-  window.addEventListener('mousemove', e => moveDrag(e.clientX, e.clientY));
+  window.addEventListener('mousemove', e => moveMouseDrag(e.clientX, e.clientY));
   window.addEventListener('mouseup', endDrag);
-  window.addEventListener('touchend', endDrag);
 
   // =========================================================================
   // Canvas & Shared Projection Helpers
@@ -1441,7 +1507,7 @@
     const fov = 7.5;
     const persp = fov / (fov - depth * 0.35);
     const sc = Math.min(w, h) * scaleFactor * state.zoom * persp;
-    return { x: w * 0.5 + camX * sc, y: h * 0.48 - camY * sc, depth, sc };
+    return { x: w * 0.5 + state.panX + camX * sc, y: h * 0.48 + state.panY - camY * sc, depth, sc };
   }
 
   function drawArrow2D(ctx, x1, y1, x2, y2, color, lw = 2.4, head = 8.5, dash = []) {
